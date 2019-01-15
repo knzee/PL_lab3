@@ -15,9 +15,11 @@ func client(ip string) {
 
 	s_hash := get_hash()
 	
+	s_key := get_key()
+	
 	for i:=0; i<3; i++ {
 
-		s_key := get_key()
+		//s_key := get_key()
 			
 		fmt.Print("Sending: hash- ",s_hash," key- ",s_key +"\n")
 		
@@ -27,6 +29,7 @@ func client(ip string) {
 		fmt.Print("Receiving: "+ message)
 		if (message[:len(message)-1] == next_session_key(s_hash,s_key)) {
 			fmt.Print("<<<Key match>>>" + "\n\n")
+			s_key = next_session_key(s_hash,s_key)
 		} else {
 			break
 		}
