@@ -107,11 +107,12 @@ func calc_hash(session_key string,val int) string{
 	} else if (val == 5) {
 		num := 0
 		for i:=0; i<len(session_key); i++ {
-			ch := rune(int([]rune(session_key)[i])^43 )
-			if !unicode.IsDigit(ch) {
-				ch = rune(int(ch))
+			ch := string(([]rune(session_key)[i])^43 )
+			if !unicode.IsDigit([]rune(ch)[0]) {
+				ch = strconv.Itoa(int([]rune(ch)[0]))
 			}
-			num += int(ch)
+			temp,_ := strconv.Atoi(ch)
+			num += int(temp)
 		}
 		return strconv.Itoa(num)
 	} else {
