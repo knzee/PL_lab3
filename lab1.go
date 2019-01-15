@@ -112,7 +112,7 @@ func calc_hash(session_key string,val int) string{
 				ch = strconv.Itoa(int([]rune(ch)[0]))
 			}
 			temp,_ := strconv.Atoi(ch)
-			num += int(temp)
+			num += temp
 		}
 		return strconv.Itoa(num)
 	} else {
