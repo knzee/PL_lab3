@@ -12,18 +12,21 @@ import "unicode"
 
 func client(ip string) {
 	conn, _ := net.Dial("tcp", ip)
+	for i:=0; i<3; i++ {
+		s_hash := get_hash()
+		s_key := get_key()
+		
+		fmt.Print("Sending: hash- ",s_hash," key- ",s_key +"\n")
+		
+		fmt.Fprintf(conn, s_hash + " " + s_key + "\n")
 
-	s_hash := get_hash()
-	s_key := get_key()
-	
-	fmt.Print("Sending: hash- ",s_hash," key- ",s_key +"\n")
-	
-	fmt.Fprintf(conn, s_hash + " " + s_key + "\n")
-
-	message, _ := bufio.NewReader(conn).ReadString('\n')
-	fmt.Print("Receiving: "+ message)
-	if (message[:len(message)-1] == next_session_key(s_hash,s_key)) {
-		fmt.Print("<<<Key match>>>" + "\n\n")
+		message, _ := bufio.NewReader(conn).ReadString('\n')
+		fmt.Print("Receiving: "+ message)
+		if (message[:len(message)-1] == next_session_key(s_hash,s_key)) {
+			fmt.Print("<<<Key match>>>" + "\n\n")
+		} else {
+			break
+		}
 	}
 }
 
@@ -34,35 +37,37 @@ func server(port string) {
   ln, _ := net.Listen("tcp", ":" + port)
 
   for {
-    conn, _ := ln.Accept()
-	
+	conn, _ := ln.Accept()
 	go handleRequest(conn)
-
   }
 }
 
 func handleRequest(conn net.Conn) {
 
-    message, _ := bufio.NewReader(conn).ReadString('\n')
+	for i:=0; i<3;i++ {
+		message, _ := bufio.NewReader(conn).ReadString('\n')
 
-	fmt.Print("Incoming data: \n")
+		fmt.Print("Incoming data: \n")
+		
+		a:= strings.Split(message," ")
+		a[1]=(a[1])[:len(a[1])-1]
+		fmt.Print("hash: ",a[0]," key: ",a[1],"\n\n")
+		
+		newmessage := next_session_key(a[0],a[1])
+
+		conn.Write([]byte(newmessage + "\n"))
+	}
 	
-	a:= strings.Split(message," ")
-	a[1]=(a[1])[:len(a[1])-1]
-	fmt.Print("hash: ",a[0]," key: ",a[1],"\n\n")
-	
-	newmessage := next_session_key(a[0],a[1])
-
-	conn.Write([]byte(newmessage + "\n"))
-
 	conn.Close()
+	fmt.Print("Connection closed" + "\n\n")
+
 }
 
 func get_key() string{
 	result := ""
     r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i:=1; i < 11; i++ {
-		result += strconv.Itoa(r.Intn(9) + 1)
+		result += string(strconv.Itoa(r.Intn(9) + 1)[0])
 	}
 	return result
 }
@@ -132,7 +137,7 @@ func main() {
 		test, _ := strconv.Atoi(args[2])
 		if ((args[1]=="-n")&&(test > 0)) {
 			for i:= 0; i < test; i++ {
-				client(args[0])
+				go client(args[0])
 			}
 		} else {
 			fmt.Println("Не указано количество клиентов")
@@ -141,5 +146,7 @@ func main() {
 	} else {
 		server(args[0])
 	}
-	
+
+	var kostil string
+	fmt.Fscan(os.Stdin, &kostil) 
 }
