@@ -67,7 +67,7 @@ func get_key() string{
 	result := ""
     r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i:=1; i < 11; i++ {
-		result += string(strconv.Itoa(r.Intn(9) + 1)[0])
+		result += string(strconv.Itoa(int(9*r.Float64() + 1))[0])
 	}
 	return result
 }
@@ -76,7 +76,7 @@ func get_hash() string{
 	li := ""
     r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i:=0; i < 5; i++ {
-		li += strconv.Itoa(r.Intn(6) + 1)
+		li += strconv.Itoa(int(6*r.Float64() + 1))
 	}
 	return li
 }
@@ -137,7 +137,7 @@ func main() {
 		test, _ := strconv.Atoi(args[2])
 		if ((args[1]=="-n")&&(test > 0)) {
 			for i:= 0; i < test; i++ {
-				go client(args[0])
+				client(args[0])
 			}
 		} else {
 			fmt.Println("Не указано количество клиентов")
