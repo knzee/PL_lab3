@@ -12,10 +12,13 @@ import "unicode"
 
 func client(ip string) {
 	conn, _ := net.Dial("tcp", ip)
+
+	s_hash := get_hash()
+	
 	for i:=0; i<3; i++ {
-		s_hash := get_hash()
+
 		s_key := get_key()
-		
+			
 		fmt.Print("Sending: hash- ",s_hash," key- ",s_key +"\n")
 		
 		fmt.Fprintf(conn, s_hash + " " + s_key + "\n")
