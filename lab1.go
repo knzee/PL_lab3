@@ -17,14 +17,18 @@ func client(ip string) {
 	
 	s_key := get_key()
 	
+	fmt.Fprintf(conn, s_hash + "\n")
+	br, _ := bufio.NewReader(conn).ReadString('\n')
+	fmt.Print(br)
+	
 	for i:=0; i<3; i++ {
 
 		//s_key := get_key()
-			
+		
+		fmt.Fprintf(conn, s_key + "\n")
+
 		fmt.Print("Sending: hash- ",s_hash," key- ",s_key +"\n")
 		
-		fmt.Fprintf(conn, s_hash + " " + s_key + "\n")
-
 		message, _ := bufio.NewReader(conn).ReadString('\n')
 		fmt.Print("Receiving: "+ message)
 		if (message[:len(message)-1] == next_session_key(s_hash,s_key)) {
@@ -49,17 +53,19 @@ func server(port string) {
 }
 
 func handleRequest(conn net.Conn) {
-
+	hash, _ := bufio.NewReader(conn).ReadString('\n')
+	hash = hash[:len(hash)-1]
+	fmt.Fprintf(conn,"recieved \n")
 	for i:=0; i<3;i++ {
 		message, _ := bufio.NewReader(conn).ReadString('\n')
-
+		message = message[:len(message)-1]
 		fmt.Print("Incoming data: \n")
 		
-		a:= strings.Split(message," ")
-		a[1]=(a[1])[:len(a[1])-1]
-		fmt.Print("hash: ",a[0]," key: ",a[1],"\n\n")
+		//a:= strings.Split(message," ")
+		//a[1]=(a[1])[:len(a[1])-1]
+		fmt.Print("hash: ",hash," key: ",message,"\n\n")
 		
-		newmessage := next_session_key(a[0],a[1])
+		newmessage := next_session_key(hash,message)
 
 		conn.Write([]byte(newmessage + "\n"))
 	}
@@ -97,7 +103,7 @@ func calc_hash(session_key string,val int) string{
 		for i:= 1; i < len(session_key); i++ {
 			result+= string(session_key[len(session_key)-i])
 		}
-		return result + session_key[0:5]
+		return result + string(session_key[0])
 	} else if (val == 3) {
 		return session_key[(len(session_key)-5):] + session_key[0:5]
 	} else if (val == 4) {
@@ -144,7 +150,7 @@ func main() {
 		test, _ := strconv.Atoi(args[2])
 		if ((args[1]=="-n")&&(test > 0)) {
 			for i:= 0; i < test; i++ {
-				client(args[0])
+				go client(args[0])
 			}
 		} else {
 			fmt.Println("Не указано количество клиентов")
