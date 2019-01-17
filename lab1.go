@@ -17,22 +17,27 @@ func client(ip string) {
 	
 	s_key := get_key()
 	
-	fmt.Fprintf(conn, s_hash + "\n")
-	br, _ := bufio.NewReader(conn).ReadString('\n')
-	fmt.Print(br)
+	var answer [15]byte
+	
+	conn.Write([]byte(s_hash))
+	
+	bufio.NewReader(conn).Read(answer[0:15])
+	fmt.Print(string(answer[0:15]))
 	
 	for i:=0; i<3; i++ {
+		var new_key [10]byte
 
-		//s_key := get_key()
+		conn.Write([]byte(s_key))
 		
-		fmt.Fprintf(conn, s_key + "\n")
-
 		fmt.Print("Sending: hash- ",s_hash," key- ",s_key +"\n")
 		
-		message, _ := bufio.NewReader(conn).ReadString('\n')
+		bufio.NewReader(conn).Read(new_key[0:10])
+		message := string(new_key[0:10])
+		
 		fmt.Print("Receiving: "+ message)
-		if (message[:len(message)-1] == next_session_key(s_hash,s_key)) {
-			fmt.Print("<<<Key match>>>" + "\n\n")
+		
+		if (message == next_session_key(s_hash,s_key)) {
+			fmt.Print("\n<<<Key match>>>" + "\n\n")
 			s_key = next_session_key(s_hash,s_key)
 		} else {
 			break
@@ -53,21 +58,25 @@ func server(port string) {
 }
 
 func handleRequest(conn net.Conn) {
-	hash, _ := bufio.NewReader(conn).ReadString('\n')
-	hash = hash[:len(hash)-1]
-	fmt.Fprintf(conn,"recieved \n")
+	var byte_hash [5]byte
+	bufio.NewReader(conn).Read(byte_hash[0:5])
+	
+	hash := string(byte_hash[0:5])
+	
+	conn.Write([]byte("Hash recieved!\n"))
+	
 	for i:=0; i<3;i++ {
-		message, _ := bufio.NewReader(conn).ReadString('\n')
-		message = message[:len(message)-1]
+		var byte_key [10]byte
+		bufio.NewReader(conn).Read(byte_key[0:10])
+		message:= string(byte_key[0:10])
+
 		fmt.Print("Incoming data: \n")
 		
-		//a:= strings.Split(message," ")
-		//a[1]=(a[1])[:len(a[1])-1]
 		fmt.Print("hash: ",hash," key: ",message,"\n\n")
 		
 		newmessage := next_session_key(hash,message)
 
-		conn.Write([]byte(newmessage + "\n"))
+		conn.Write([]byte(newmessage))
 	}
 	
 	conn.Close()
@@ -113,6 +122,7 @@ func calc_hash(session_key string,val int) string{
 			num += temp + 41
 		}
 		return strconv.Itoa(num)
+
 	} else if (val == 5) {
 		num := 0
 		for i:=0; i<len(session_key); i++ {
@@ -134,16 +144,19 @@ func calc_hash(session_key string,val int) string{
 func next_session_key(hash string,session_key string) string{
 	result := 0
 	for i:=0; i<len(hash); i++ {
-		temp,_ := strconv.Atoi(calc_hash(session_key, int([]rune(hash)[i])))
+		index,_ := strconv.Atoi(string(hash[i]))
+		temp,_ := strconv.Atoi(calc_hash(session_key, index))
 		result += temp
 	}
-	r:= strings.Repeat("0",10) + strconv.Itoa(result)[0:10]
+	l:= len(strconv.Itoa(result))
+	if (len(strconv.Itoa(result)) > 10 ) {l = 10}
+	r:= strings.Repeat("0",10) + strconv.Itoa(result)[0:l]
 	return r[len(r)-10:]
 }
 
 
 func main() {
-	
+
     args := os.Args[1:]
 
 	if (len(args[0]) > 4) {
@@ -162,4 +175,5 @@ func main() {
 
 	var kostil string
 	fmt.Fscan(os.Stdin, &kostil) 
+
 }
